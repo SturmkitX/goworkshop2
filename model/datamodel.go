@@ -1,4 +1,4 @@
-package main
+package model
 
 //BookDto - The DTO used to access books
 type BookDto struct {
