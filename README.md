@@ -53,16 +53,53 @@
 1. print all authors to the STDOUT
 1. print all books to the STDOUT
 ### 5. start a web server, listening on a configured port
+1. create web package
+1. create webserver.go
+1. import net/http
+1. read listening port from API_PORT environment variable, defaulting to 8000
+1. define a http.Handler function that will handle the incoming HTTP requests to the web server
+1. launch the web server on API_PORT port by calling **ListenAndServe**
+1. if the web server returns an error, exit the application
 ### 6. writing a simple REST endpoint
+1. change the path of the REST endpoint from /test to /books
+1. configure the handler to respond only to GET methods
+1. marshal the books array to JSON bytes
+1. convert the JSON bytes to string
+1. set the "Content-Type" response header to "application/json"
+1. when /books endpoint is hit, return all books previously loaded from the JSON file
 ### 7. implement all REST endpoints with data loaded from files
-
+1. install github.com/gorilla/mux package using 'go get -u' command
+1. create util.go file in web package and implement a generic function that should write any array of data as JSON to the http.ResponseWriter
+1. create routes.go file
+1. define authorBaseUrl, authorByUuidUrl, booksBaseUrl, bookByUuidUrl constants with proper values
+1. define a Route struct with Method, Pattern, ExpectedCode and HandlerFunc fields
+1. define a Routes struct which should contain an array of Route structs
+1. declare a variable named routes of type Route and define all the routes mappings
+1. create author_handlers.go file in web package
+1. create book_handlers.go file in web package
+1. in each file, create HTTP handlers for:
+ * get all entities
+ * get entity by id
+ * delete entity by id
+ * add new entity
+ * update entity
+11. use mux.Vars(r)["..."] to extract path variables
+12. in webserver.StartServer function, create a Gorilla mux router, register the routes array with the router and then start the http server with the router as handler
 # Part 2 - Add unit tests for all REST endpoints and create the persistence layer
-### 8. write unit tests for all REST endpoints
+### 8. initialize database persistence
+1. use go get to retrieve github.com/jinzhu/gorm package
+1. use go get to retrieve github.com/jinzhu/gorm/dialects/postgres
+1. create persistence package
+1. create config.go file in persistence package
+1. import for side effects github.com/jinzhu/gorm/dialects/postgres
+1. create an InitDB function that uses gorm.Open to open a connection to a PostgreSQL db
+1. gorm.Open should receive the following parameters: dialect, host, port, user, password, dbname, sslmode
+1. on the DBInstance set DB().SetMaxOpenConns, LogMode, SingularTable, AutoMigrate for Book and Author entities, add foreign constraint from Book to Author and add unique constraint on book title
 ### 9. add persistence mappings
 ### 10. add persistence services to retrieve data from db
 ### 11. switch from loading data from db instead of files
 
-#Part 3 - Add error handling and logging, improve performance with Go routines
+# Part 3 - Add error handling and logging, improve performance with Go routines
 ### 12. add error handling
 ### 13. add logging support
 ### 14. create a configuration service for the application
