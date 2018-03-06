@@ -11,10 +11,21 @@ const (
 	UNIQUE_BOOK_TITLE_CONSTRAINT = "title_unique"
 )
 
+var DBInstance *gorm.DB
+
+func GetDB() (*gorm.DB, error) {
+	if DBInstance == nil {
+		DBInstance, err := InitDB()
+		return DBInstance, err
+	}
+
+	return DBInstance, nil
+}
+
 func InitDB() (*gorm.DB, error) {
 
-	DBInstance, err := gorm.Open("postgres", "host=localhost port=5432 user=dbadmin " +
-		"password=dbadmin dbname=workshop_db sslmode=disable")
+	DBInstance, err := gorm.Open("postgres", "host=localhost port=5432 user=db_admin " +
+		"password=db_admin dbname=workshop_db sslmode=disable")
 
 	if err != nil {
 		fmt.Printf("Error while aquiring db connection: %s", err)

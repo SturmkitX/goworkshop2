@@ -7,20 +7,26 @@ import (
 	"fmt"
 	"io/ioutil"
 	"encoding/json"
+	"goworkshop/persistence"
 )
 
 func GetAllAuthors(w http.ResponseWriter, r *http.Request) {
+	connection, err := persistence.GetDB()
+	if err != nil {
+		panic(err)
+	}
+	connection.Find(&model.Authors)
 	WriteJson(w, model.Authors)
 }
 
 func GetAuthorByUUID(w http.ResponseWriter, r *http.Request) {
-	authorUUID := mux.Vars(r)["uuid"]
-	author, err := model.Authors.Get(authorUUID)
+	connection, err := persistence.GetDB()
 	if err != nil {
-		fmt.Fprintf(w, "Error: %s", err)
-	} else {
-		WriteJson(w, author)
+		panic(err)
 	}
+	authorUUID := mux.Vars(r)["uuid"]
+	connection.Where(model.Author{UUID:authorUUID}).Find(&model.Authors)
+	WriteJson(w, model.Authors)
 }
 
 func DeleteAuthorByUUID(w http.ResponseWriter, r *http.Request) {
@@ -34,13 +40,18 @@ func DeleteAuthorByUUID(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddAuthor(w http.ResponseWriter, r *http.Request) {
+	connection, err := persistence.GetDB()
+	if err != nil {
+		panic(err)
+	}
+
 	var author model.Author
 	bytes, _ := ioutil.ReadAll(r.Body)
-	err := json.Unmarshal(bytes, &author)
+	err = json.Unmarshal(bytes, &author)
 	if err != nil {
 		fmt.Fprintf(w, "Failed to create author: %s", err)
 	} else {
-		model.Authors.Add(author)
+		connection.Create(author)
 		WriteJson(w, author)
 	}
 }
