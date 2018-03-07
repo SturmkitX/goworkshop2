@@ -1,13 +1,13 @@
 package web
 
 import (
-	"net/http"
-	"goworkshop/model"
-	"github.com/gorilla/mux"
-	"fmt"
-	"io/ioutil"
 	"encoding/json"
+	"fmt"
+	"github.com/gorilla/mux"
+	"goworkshop/model"
 	"goworkshop/persistence"
+	"io/ioutil"
+	"net/http"
 )
 
 func GetAllAuthors(w http.ResponseWriter, r *http.Request) {
@@ -25,18 +25,19 @@ func GetAuthorByUUID(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	authorUUID := mux.Vars(r)["uuid"]
-	connection.Where(model.Author{UUID:authorUUID}).Find(&model.Authors)
+	connection.Where(model.Author{UUID: authorUUID}).Find(&model.Authors)
 	WriteJson(w, model.Authors)
 }
 
 func DeleteAuthorByUUID(w http.ResponseWriter, r *http.Request) {
-	var authorUUID = mux.Vars(r)["uuid"]
-	err := model.Authors.Delete(authorUUID)
+	connection, err := persistence.GetDB()
 	if err != nil {
-		fmt.Fprintf(w, "Failed to delete author: %s", err)
-	} else {
-		WriteJson(w, model.Authors)
+		panic(err)
 	}
+
+	var authorUUID = mux.Vars(r)["uuid"]
+	connection.Where(model.Author{UUID: authorUUID}).Delete(&model.Authors)
+	WriteJson(w, model.Authors)
 }
 
 func AddAuthor(w http.ResponseWriter, r *http.Request) {
@@ -51,23 +52,24 @@ func AddAuthor(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Fprintf(w, "Failed to create author: %s", err)
 	} else {
-		connection.Create(author)
+		connection.Create(&author)
 		WriteJson(w, author)
 	}
 }
 
 func UpdateAuthor(w http.ResponseWriter, r *http.Request) {
+	connection, err := persistence.GetDB()
+	if err != nil {
+		panic(err)
+	}
+
 	var author model.Author
 	bytes, _ := ioutil.ReadAll(r.Body)
-	err := json.Unmarshal(bytes, &author)
+	err = json.Unmarshal(bytes, &author)
 	if err != nil {
 		fmt.Fprintf(w, "Failed to update author: %s", err)
 		return
 	}
-	author, err = model.Authors.Update(author)
-	if err != nil {
-		fmt.Fprintf(w, "Failed to update author: %s", err)
-		return
-	}
+	connection.Save(&author)
 	WriteJson(w, author)
 }

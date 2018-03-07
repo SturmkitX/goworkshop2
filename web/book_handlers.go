@@ -1,12 +1,13 @@
 package web
 
 import (
-	"net/http"
+	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	"goworkshop/model"
-	"fmt"
+	"goworkshop/persistence"
 	"io/ioutil"
-	"encoding/json"
+	"net/http"
 )
 
 //Demonstrates the basic functionality of private and public modifiers in GO
@@ -24,53 +25,67 @@ func Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetAllBooks(w http.ResponseWriter, r *http.Request) {
+	connection, err := persistence.GetDB()
+	if err != nil {
+		panic(err)
+	}
+	connection.Find(&model.Books)
 	WriteJson(w, model.Books)
 }
 
 func GetBookByUUID(w http.ResponseWriter, r *http.Request) {
-	var bookUUID = mux.Vars(r)["uuid"]
-	book, err := model.Books.Get(bookUUID)
+	connection, err := persistence.GetDB()
 	if err != nil {
-		fmt.Fprintf(w, "Error: %s", err)
-	} else {
-		WriteJson(w, book)
+		panic(err)
 	}
+
+	var bookUUID = mux.Vars(r)["uuid"]
+	connection.Where(model.Book{UUID: bookUUID}).Find(&model.Books)
+	WriteJson(w, model.Books)
 }
 
 func DeleteBookByUUID(w http.ResponseWriter, r *http.Request) {
-	var bookUUID = mux.Vars(r)["uuid"]
-	err := model.Books.Delete(bookUUID)
+	connection, err := persistence.GetDB()
 	if err != nil {
-		fmt.Fprintf(w, "Failed to delete book: %s", err)
-	} else {
-		WriteJson(w, model.Books)
+		panic(err)
 	}
+
+	var bookUUID = mux.Vars(r)["uuid"]
+	connection.Where(model.Book{UUID: bookUUID}).Delete(&model.Books)
+	WriteJson(w, model.Books)
 }
 
 func AddBook(w http.ResponseWriter, r *http.Request) {
+	connection, err := persistence.GetDB()
+	if err != nil {
+		panic(err)
+	}
+
 	var book model.Book
 	bytes, _ := ioutil.ReadAll(r.Body)
-	err := json.Unmarshal(bytes, &book)
+	err = json.Unmarshal(bytes, &book)
 	if err != nil {
 		fmt.Fprintf(w, "Failed to create book: %s", err)
 	} else {
-		model.Books.Add(book)
+		connection.Create(&book)
 		WriteJson(w, book)
 	}
 }
 
 func UpdateBook(w http.ResponseWriter, r *http.Request) {
+	connection, err := persistence.GetDB()
+	if err != nil {
+		panic(err)
+	}
+
 	var book model.Book
 	bytes, _ := ioutil.ReadAll(r.Body)
-	err := json.Unmarshal(bytes, &book)
+	err = json.Unmarshal(bytes, &book)
 	if err != nil {
 		fmt.Fprintf(w, "Failed to update book: %s", err)
 		return
 	}
-	book, err = model.Books.Update(book)
-	if err != nil {
-		fmt.Fprintf(w, "Failed to update book: %s", err)
-		return
-	}
+
+	connection.Save(&book)
 	WriteJson(w, book)
 }
