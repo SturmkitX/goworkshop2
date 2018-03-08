@@ -17,10 +17,12 @@ type Book struct {
 	AuthorUUID  string `json:"-"`
 }
 
+
 func (book Book) String() string {
 	return fmt.Sprintf("Book{UUID='%s', Title='%s', NoPages=%d, ReleaseDate='%s',Author=%s}",
 		book.UUID, book.Title, book.NoPages, book.ReleaseDate, book.Author)
 }
+
 
 //BooksList - A list of Book objects
 type BooksList []Book

@@ -29,8 +29,15 @@ func GetAllBooks(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+
 	connection.Find(&model.Books)
-	WriteJson(w, model.Books)
+	books := make(model.BooksList, 0)
+	for _, book := range model.Books {
+		connection.Where(model.Author{UUID: book.AuthorUUID}).Find(&book.Author)
+		books = append(books, book)
+	}
+	// fmt.Println(model.Books)
+	WriteJson(w, books)
 }
 
 func GetBookByUUID(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +48,12 @@ func GetBookByUUID(w http.ResponseWriter, r *http.Request) {
 
 	var bookUUID = mux.Vars(r)["uuid"]
 	connection.Where(model.Book{UUID: bookUUID}).Find(&model.Books)
-	WriteJson(w, model.Books)
+	books := make(model.BooksList, 0)
+	for _, book := range model.Books {
+		connection.Where(model.Author{UUID: book.AuthorUUID}).Find(&book.Author)
+		books = append(books, book)
+	}
+	WriteJson(w, books)
 }
 
 func DeleteBookByUUID(w http.ResponseWriter, r *http.Request) {
@@ -67,6 +79,7 @@ func AddBook(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Fprintf(w, "Failed to create book: %s", err)
 	} else {
+
 		connection.Create(&book)
 		WriteJson(w, book)
 	}
